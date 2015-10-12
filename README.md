@@ -4,10 +4,15 @@ For a general overview of our project, please head to https://seacloud.cc/f/1646
 
 Co-authors:
 
-Karolina Zoń,
-Marcin Baranowski,
-Łukasz Lassota,
-Bartosz Markowski.
+- Karolina Zoń,
+
+- Marcin Baranowski,
+
+- Łukasz Lassota,
+
+- Bartosz Markowski.
+
+-------------------------------------------------------------------------------------------------------------------
 
 Android Project source code uses code from the https://bitbucket.org/neuralassembly/simplemjpegview repository (mainly MjpegView.java, MjpegInputStream.java and MjpegActivity.java).
 
