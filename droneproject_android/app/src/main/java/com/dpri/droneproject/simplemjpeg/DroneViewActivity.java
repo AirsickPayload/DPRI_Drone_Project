@@ -65,7 +65,9 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
 
     private String urlStream, droneIP;
     private LinkedList<String> asyncValuesQueue;
-    private final int serverPort = 8887;
+    private static final int serverPort = 8887;
+    private static final int pingPort = 8889;
+    private static final int clientPort = 8888;
     private SharedPreferences sharedPref;
 
     @Override
@@ -172,7 +174,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
     @TargetApi(Build.VERSION_CODES.GINGERBREAD)
     List<Integer> findControllers() {
         int[] deviceIds = mInputManager.getInputDeviceIds();
-        List<Integer> gamepads = new ArrayList<Integer>();
+        List<Integer> gamepads = new ArrayList<>();
         for (int deviceId : deviceIds) {
             // Sprawdzamy istnienie urządzenia w dotychczasowej liscie
             if (gamepads.contains(deviceId)) {
@@ -468,14 +470,14 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         @Override
         protected Boolean doInBackground(Void... params) {
             if(connectionError) { droneSocketClient.closeSocket(); connectionError = false; }
-            droneSocketClient = new DroneSocketClient(droneIP, serverPort);
+            droneSocketClient = new DroneSocketClient(droneIP, clientPort, serverPort, pingPort);
             return droneSocketClient.confirmVersionCompability();
         }
 
         @Override
         protected void onPostExecute(Boolean result){
             if(result){
-                asyncValuesQueue = new LinkedList<String>();
+                asyncValuesQueue = new LinkedList<>();
                 socketConnection = true;
                 new AsyncSocketSend().execute();
                 socketButton.setText("Connected!");
@@ -539,6 +541,18 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                 socketButton.setTextColor(Color.RED);
                 new AsyncSocketSonnect().execute();
             }
+        }
+    }
+
+    private class AsyncServerPingListener extends AsyncTask<Void, Void, Void>{
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            while(true){
+                if(!socketConnection) { break; }
+                droneSocketClient.pignAwaitAndReply();
+            }
+            return null;
         }
     }
 

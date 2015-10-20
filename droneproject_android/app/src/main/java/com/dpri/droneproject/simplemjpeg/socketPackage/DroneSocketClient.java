@@ -15,22 +15,28 @@ public class DroneSocketClient {
     private static final String TAG = "DroneSocketClient";
     private static final boolean DEBUG = true;
 
-    private String versionSocketClient = "v05/10/2015";
+    private String versionSocketClient = "v20/10/2015";
     private String serverAddress;
     private int serverPort;
+    private int pingPort;
+    private int clientPort;
     private InetAddress srvAddr;
 
-    int packetTIMEOUT = 3000; //ms
+    private static final int packetTIMEOUT = 3000; //ms
 
+    private DatagramSocket pingAliveSocket;
     private DatagramSocket clientSocket;
-    private DatagramPacket inPacket;
-    private DatagramPacket outPacket;
+    private DatagramPacket inPacket, pingInPacket;
+    private DatagramPacket outPacket, pingOutPacket;
 
     byte[] inData;
     byte[] outData;
+    byte[] pingData;
 
-    public DroneSocketClient(String serverAddress, int serverPort) {
+    public DroneSocketClient(String serverAddress,int clientPort, int serverPort, int pingPort) {
         this.serverAddress = serverAddress;
+        this.clientPort = clientPort;
+        this.pingPort = pingPort;
         this.serverPort = serverPort;
         try {
             srvAddr = InetAddress.getByName(serverAddress);
@@ -39,7 +45,7 @@ public class DroneSocketClient {
             if (DEBUG) Log.d(TAG, "ERROR: UNKNOWN HOST!");
         }
         try {
-            clientSocket = new DatagramSocket(8888);
+            clientSocket = new DatagramSocket(clientPort);
             clientSocket.setSoTimeout(packetTIMEOUT);
         } catch (SocketException e) {
             e.printStackTrace();
@@ -54,13 +60,13 @@ public class DroneSocketClient {
     public boolean sendValues(String valuesString){
         try {
             outData = valuesString.getBytes("UTF-8");
-            outPacket = new DatagramPacket(outData, outData.length, srvAddr, serverPort);
+            //outPacket = new DatagramPacket(outData, outData.length, srvAddr, serverPort);
             clientSocket.send(outPacket);
 
             clientSocket.receive(inPacket);
-            String response = new String(inPacket.getData(),0 , inPacket.getLength(), "UTF-8");
+            String response = new String(inPacket.getData(), 0, inPacket.getLength(), "UTF-8");
             if(response.equals("RECV_OK")){
-                if (DEBUG) Log.d(TAG, "SENT:" + valuesString);
+                if (DEBUG) Log.d(TAG, "SENT: " + valuesString);
                 return true;
             }
             else{
@@ -85,7 +91,7 @@ public class DroneSocketClient {
             String response = new String(inPacket.getData(), 0, inPacket.getLength(), "UTF-8");
             if(response.equals("VERSION MATCH")){
                 if (DEBUG) Log.d(TAG, "VERSION MATCH");
-                return true;
+                return initPingListening();
             } else{
                 if (DEBUG) Log.d(TAG, "VERSION MISMATCH!:" + response);
                 clientSocket.close();
@@ -98,11 +104,48 @@ public class DroneSocketClient {
         }
     }
 
+    private boolean initPingListening(){
+        try{
+            pingAliveSocket = new DatagramSocket(pingPort);
+            pingAliveSocket.setSoTimeout(1000);
+            pingData = new byte[1024];
+            pingOutPacket = new DatagramPacket(pingData, pingData.length, srvAddr, pingPort);
+            pingInPacket = new DatagramPacket(pingData, pingData.length);
+            return true;
+        } catch (SocketException e){
+            e.printStackTrace();
+            if (DEBUG) Log.d(TAG, "PING-SOCKET BIND ERROR!");
+            return false;
+        }
+    }
+
+    public boolean pignAwaitAndReply(){
+        try{
+            pingAliveSocket.receive(pingInPacket);
+            String response = new String(inPacket.getData(), 0, inPacket.getLength(), "UTF-8");
+            if(response.equals("PING?")){
+                if (DEBUG) Log.d(TAG, "PING PACKET RECEIVED");
+                pingData = "PONG!".getBytes("UTF-8");
+                pingAliveSocket.send(pingOutPacket);
+                return true;
+            } else{
+                if (DEBUG) Log.d(TAG, "UNKNOWN PING MESSAGE:" + response);
+                clientSocket.close();
+                return false;
+            }
+        } catch(Exception e){
+            e.printStackTrace();
+            if (DEBUG) Log.d(TAG, "PING SOCKET ERROR");
+            return false;
+        }
+    }
+
     public void closeConnection(){
         try {
             outData = "CONN_CLOSE".getBytes("UTF-8");
             outPacket = new DatagramPacket(outData, outData.length, srvAddr, serverPort);
             clientSocket.send(outPacket);
+            pingAliveSocket.close();
             clientSocket.close();
         } catch (Exception e) {
             e.printStackTrace();
