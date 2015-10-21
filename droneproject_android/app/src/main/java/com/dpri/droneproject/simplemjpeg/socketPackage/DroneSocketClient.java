@@ -60,7 +60,7 @@ public class DroneSocketClient {
     public boolean sendValues(String valuesString){
         try {
             outData = valuesString.getBytes("UTF-8");
-            //outPacket = new DatagramPacket(outData, outData.length, srvAddr, serverPort);
+            outPacket = new DatagramPacket(outData, outData.length, srvAddr, serverPort);
             clientSocket.send(outPacket);
 
             clientSocket.receive(inPacket);
@@ -107,7 +107,6 @@ public class DroneSocketClient {
     private boolean initPingListening(){
         try{
             pingAliveSocket = new DatagramSocket(pingPort);
-            pingAliveSocket.setSoTimeout(1000);
             pingData = new byte[1024];
             pingOutPacket = new DatagramPacket(pingData, pingData.length, srvAddr, pingPort);
             pingInPacket = new DatagramPacket(pingData, pingData.length);
@@ -119,22 +118,24 @@ public class DroneSocketClient {
         }
     }
 
-    public boolean pignAwaitAndReply(){
+    public boolean pingAwaitAndReply(){
         try{
             pingAliveSocket.receive(pingInPacket);
-            String response = new String(inPacket.getData(), 0, inPacket.getLength(), "UTF-8");
+            String response = new String(pingInPacket.getData(), 0, pingInPacket.getLength(), "UTF-8");
             if(response.equals("PING?")){
                 if (DEBUG) Log.d(TAG, "PING PACKET RECEIVED");
                 pingData = "PONG!".getBytes("UTF-8");
+                pingOutPacket = new DatagramPacket(pingData, pingData.length, srvAddr, pingPort);
                 pingAliveSocket.send(pingOutPacket);
                 return true;
             } else{
                 if (DEBUG) Log.d(TAG, "UNKNOWN PING MESSAGE:" + response);
-                clientSocket.close();
+                pingAliveSocket.close();
                 return false;
             }
         } catch(Exception e){
             e.printStackTrace();
+            pingAliveSocket.close();
             if (DEBUG) Log.d(TAG, "PING SOCKET ERROR");
             return false;
         }
@@ -156,6 +157,4 @@ public class DroneSocketClient {
     public void closeSocket(){
         clientSocket.close();
     }
-
-
 }

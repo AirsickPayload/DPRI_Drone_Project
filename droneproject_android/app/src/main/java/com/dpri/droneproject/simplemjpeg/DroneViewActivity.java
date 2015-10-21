@@ -152,7 +152,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
 
     void connectionInitHandler(){
         if (!socketConnection) {
-            new AsyncSocketSonnect().execute();
+            new AsyncSocketConnect().execute();
         } else {
             socketConnection = false;
             droneSocketClient.closeConnection();
@@ -465,7 +465,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         });
     }
 
-    private class AsyncSocketSonnect extends AsyncTask<Void, Void, Boolean>{
+    private class AsyncSocketConnect extends AsyncTask<Void, Void, Boolean>{
 
         @Override
         protected Boolean doInBackground(Void... params) {
@@ -482,6 +482,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                 new AsyncSocketSend().execute();
                 socketButton.setText("Connected!");
                 socketButton.setTextColor(Color.GREEN);
+                new AsyncServerPingListener().execute();
             } else {
                 socketButton.setText("CONN_ERROR!");
                 socketButton.setTextColor(Color.RED);
@@ -539,7 +540,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                 inputTextView.append(System.getProperty("line.separator") + "Błąd podczas wysyłania wartości! Próbuję wznowić połączenie...");
                 socketButton.setText("ERROR");
                 socketButton.setTextColor(Color.RED);
-                new AsyncSocketSonnect().execute();
+                new AsyncSocketConnect().execute();
             }
         }
     }
@@ -550,7 +551,8 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         protected Void doInBackground(Void... params) {
             while(true){
                 if(!socketConnection) { break; }
-                droneSocketClient.pignAwaitAndReply();
+                boolean result = droneSocketClient.pingAwaitAndReply();
+                if(!result) { break; }
             }
             return null;
         }
