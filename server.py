@@ -20,8 +20,8 @@ def emergencyDownThrottling(placeholder1, placeholder2):
     while throttleVal > throttleEmergencyMinVal:
         throttleVal -= 5
         call('echo ' + throttlePin + '=' +  + ' > ' + '/dev/servoblaster', shell=True)
-        sleep(0.5)
         time.sleep(0.3)
+    emergency = False
 
 def pingThreadMethod(addr, ignored):
     pingsocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
