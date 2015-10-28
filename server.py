@@ -19,11 +19,13 @@ def emergencyDownThrottling(placeholder1, placeholder2):
     throttleVal = int(float(throttleVal[0]))
     while throttleVal > throttleEmergencyMinVal:
         throttleVal -= 5
-        call('echo ' + throttlePin + '=' +  + ' > ' + '/dev/servoblaster', shell=True)
+        print throttleVal
+        call('echo ' + str(throttlePin) + '=' + ' > ' + '/dev/servoblaster', shell=True)
         time.sleep(0.3)
     emergency = False
 
 def pingThreadMethod(addr, ignored):
+    global closed
     pingsocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         pingsocket.bind(('', pingPort)) # zamiast socket.gethostname() mozna '', zeby byl osiagalny ze wszystkich interfejsow
@@ -34,6 +36,8 @@ def pingThreadMethod(addr, ignored):
     pingsocket.settimeout(2) # max 2s
     while 1:
         time.sleep(1.5)
+        if closed:
+            continue
         try:
             if awaiting:
                 print 'PING?'
@@ -49,10 +53,10 @@ def pingThreadMethod(addr, ignored):
                     emergency = True
                     break
             if closed:
-                closed = False
                 break
         except socket.error as msg:
             emergency = True
+            closed = True
             thread.start_new_thread(emergencyDownThrottling, ('',''))
             print 'PingSocket timeout - EMERGENCY!'
 
@@ -94,15 +98,15 @@ while 1:
 
             if data == versionStringServer:
                 print "CLIENT RECONNECTED!"
+                closed = False
                 s.sendto('VERSION MATCH', (addr[0], clientPort))
-                thread.start_new_thread(pingThreadMethod, addr)
+                #thread.start_new_thread(pingThreadMethod, addr)
 
             #OBSLUGA STANDARDOWYCH WARTOSCI
             values = data.split(',')
             #for value in values:
                 #call('echo ' + value + ' > ' + '/dev/servoblaster', shell=True)
             lastThrottleValue = values[0]
-            print lastThrottleValue
             print values
             s.sendto('RECV_OK', (addr[0], clientPort))
 
