@@ -8,7 +8,7 @@ clientPort = 8888
 serverPort = 8887
 pingPort = 8889
 awaiting = closed = emergency = False
-lastThrottleValue = None
+lastThrottleValue = '0=0%'
 throttleEmergencyMinVal = 25
 
 def emergencyDownThrottling(placeholder1, placeholder2):
@@ -16,7 +16,7 @@ def emergencyDownThrottling(placeholder1, placeholder2):
     split = lastThrottleValue.split('=')
     throttlePin = split[0]
     throttleVal = split[1].split('%')
-    throttleVal = int(throttleVal[0])
+    throttleVal = int(float(throttleVal[0]))
     while throttleVal > throttleEmergencyMinVal:
         throttleVal -= 5
         call('echo ' + throttlePin + '=' +  + ' > ' + '/dev/servoblaster', shell=True)
@@ -35,7 +35,7 @@ def pingThreadMethod(addr, ignored):
     while 1:
         time.sleep(1.5)
         try:
-            if(awaiting):
+            if awaiting:
                 print 'PING?'
                 pingsocket.sendto('PING?', (addr, 8889))
                 pingData, addr2 = pingsocket.recvfrom(1024)
@@ -48,7 +48,7 @@ def pingThreadMethod(addr, ignored):
                     print 'ERROR: ' + pingData
                     emergency = True
                     break
-            if(closed):
+            if closed:
                 closed = False
                 break
         except socket.error as msg:
@@ -102,6 +102,7 @@ while 1:
             #for value in values:
                 #call('echo ' + value + ' > ' + '/dev/servoblaster', shell=True)
             lastThrottleValue = values[0]
+            print lastThrottleValue
             print values
             s.sendto('RECV_OK', (addr[0], clientPort))
 

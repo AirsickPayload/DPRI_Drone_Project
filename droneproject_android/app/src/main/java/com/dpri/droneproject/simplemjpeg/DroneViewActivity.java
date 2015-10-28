@@ -4,6 +4,7 @@ package com.dpri.droneproject.simplemjpeg;
  * Created by alan on 23.09.15.
  */
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
@@ -474,15 +475,16 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
             return droneSocketClient.confirmVersionCompability();
         }
 
+        @TargetApi(Build.VERSION_CODES.HONEYCOMB)
         @Override
         protected void onPostExecute(Boolean result){
             if(result){
                 asyncValuesQueue = new LinkedList<>();
                 socketConnection = true;
-                new AsyncSocketSend().execute();
+                new AsyncServerPingListener().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                new AsyncSocketSend().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                 socketButton.setText("Connected!");
                 socketButton.setTextColor(Color.GREEN);
-                new AsyncServerPingListener().execute();
             } else {
                 socketButton.setText("CONN_ERROR!");
                 socketButton.setTextColor(Color.RED);
@@ -549,6 +551,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
 
         @Override
         protected Void doInBackground(Void... params) {
+            if (DEBUG) Log.d(TAG, "Ping listener started!");
             while(true){
                 if(!socketConnection) { break; }
                 boolean result = droneSocketClient.pingAwaitAndReply();
@@ -614,4 +617,13 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
             startActivity((new Intent(DroneViewActivity.this, DroneViewActivity.class)));
         }
     }
+
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB) // API 11
+    public static <T> void executeAsyncTask(AsyncTask<T, ?, ?> asyncTask, T... params) {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+            asyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, params);
+        else
+            asyncTask.execute(params);
+    }
+
 }
