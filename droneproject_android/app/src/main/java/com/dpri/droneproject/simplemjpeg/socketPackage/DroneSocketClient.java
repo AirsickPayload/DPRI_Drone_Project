@@ -15,7 +15,7 @@ public class DroneSocketClient {
     private static final String TAG = "DroneSocketClient";
     private static final boolean DEBUG = true;
 
-    private String versionSocketClient = "v20/10/2015";
+    private String versionSocketClient = "v28/10/2015";
     private String serverAddress;
     private int serverPort;
     private int pingPort;
@@ -136,7 +136,7 @@ public class DroneSocketClient {
         } catch(Exception e){
             e.printStackTrace();
             pingAliveSocket.close();
-            if (DEBUG) Log.d(TAG, "PING SOCKET ERROR");
+            if (DEBUG) Log.d(TAG, "PING SOCKET ERROR / MAYBE IT'S ALREADY CLOSED?");
             return false;
         }
     }

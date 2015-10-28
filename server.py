@@ -12,6 +12,7 @@ lastThrottleValue = '0=0%'
 throttleEmergencyMinVal = 25
 
 def emergencyDownThrottling(placeholder1, placeholder2):
+    global emergency
     #1=XX%
     split = lastThrottleValue.split('=')
     throttlePin = split[0]
@@ -20,12 +21,12 @@ def emergencyDownThrottling(placeholder1, placeholder2):
     while throttleVal > throttleEmergencyMinVal:
         throttleVal -= 5
         print throttleVal
-        call('echo ' + str(throttlePin) + '=' + ' > ' + '/dev/servoblaster', shell=True)
+        #call('echo ' + str(throttlePin) + '=' + str(throttleVal) + '% > ' + '/dev/servoblaster', shell=True)
         time.sleep(0.3)
     emergency = False
 
 def pingThreadMethod(addr, ignored):
-    global closed
+    global closed, emergency
     pingsocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         pingsocket.bind(('', pingPort)) # zamiast socket.gethostname() mozna '', zeby byl osiagalny ze wszystkich interfejsow
@@ -35,9 +36,10 @@ def pingThreadMethod(addr, ignored):
     #oczekiwanie na odp. ze strony klienta nie moze trwac wiecznie
     pingsocket.settimeout(2) # max 2s
     while 1:
-        time.sleep(1.5)
+        time.sleep(1.5) # w przypadku poprawnego rozłączenia odczekać 1.5sek przed ponowną próbą połączenia!
         if closed:
-            continue
+            pingsocket.close()
+            break
         try:
             if awaiting:
                 print 'PING?'
@@ -51,14 +53,17 @@ def pingThreadMethod(addr, ignored):
                 else:
                     print 'ERROR: ' + pingData
                     emergency = True
+                    closed = True
+                    pingsocket.close()
+                    thread.start_new_thread(emergencyDownThrottling, ('',''))
                     break
-            if closed:
-                break
         except socket.error as msg:
             emergency = True
             closed = True
             thread.start_new_thread(emergencyDownThrottling, ('',''))
             print 'PingSocket timeout - EMERGENCY!'
+            pingsocket.close()
+            break
 
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 print 'Socket created'
@@ -75,11 +80,12 @@ while 1:
     versionStringClient, addr = s.recvfrom(1024)
     print 'Connected with ' + addr[0] + ':' + str(addr[1])
     #compatibility string
-    versionStringServer = 'v20/10/2015'
+    versionStringServer = 'v28/10/2015'
     versionStringClient = versionStringClient.decode()
     if versionStringClient == versionStringServer:
         print "VERSION MATCH!"
         s.sendto('VERSION MATCH', (addr[0], clientPort))
+        closed = False
         thread.start_new_thread(pingThreadMethod, addr)
         while 1:
             if emergency:
@@ -100,7 +106,7 @@ while 1:
                 print "CLIENT RECONNECTED!"
                 closed = False
                 s.sendto('VERSION MATCH', (addr[0], clientPort))
-                #thread.start_new_thread(pingThreadMethod, addr)
+                thread.start_new_thread(pingThreadMethod, addr)
 
             #OBSLUGA STANDARDOWYCH WARTOSCI
             values = data.split(',')

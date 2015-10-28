@@ -8,7 +8,6 @@ public class DroneValues {
     private float throttle ,yaw, pitch, roll;
     private int throttlePin, yawPin, pitchPin, rollPin;
 
-
     public DroneValues(float throttle, float pitch, float yaw, float roll) {
         this.throttle = throttle;
         this.pitch = pitch;
@@ -40,6 +39,7 @@ public class DroneValues {
     }
 
     public float getThrottle() {
+
         return throttle;
     }
 

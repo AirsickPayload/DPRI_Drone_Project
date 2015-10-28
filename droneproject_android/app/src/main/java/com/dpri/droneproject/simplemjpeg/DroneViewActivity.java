@@ -4,7 +4,6 @@ package com.dpri.droneproject.simplemjpeg;
  * Created by alan on 23.09.15.
  */
 
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
@@ -97,13 +96,13 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         inputTextView = (TextView) findViewById(R.id.inputTextView);
         inputTextView.setMovementMethod(new ScrollingMovementMethod());
         yawTxtV = (TextView) findViewById(R.id.yawTextView);
-        yawTxtV.setText("0%");
+        yawTxtV.setText("50%");
         throttleTxtV = (TextView) findViewById(R.id.throttleTextView);
         throttleTxtV.setText("0%");
         rollTxtV = (TextView) findViewById(R.id.rollTextView);
-        rollTxtV.setText("0%");
+        rollTxtV.setText("50%");
         pitchTxtV = (TextView) findViewById(R.id.pitchTextView);
-        pitchTxtV.setText("0%");
+        pitchTxtV.setText("50%");
         settingsButton = (ImageButton) findViewById(R.id.settingsButton);
         //Dodanie obsługi otwarcia Okna Ustawień
         settingsButton.setOnClickListener(new View.OnClickListener() {
@@ -121,7 +120,6 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
             @Override
             public void onClick(View view) {
                 if (!streamRunning) {
-                    //droneSocketClient = new DroneSocketClient(droneIP, serverPort);
                     mjpegView = (MjpegView) findViewById(R.id.mjpegView);
                     if (mjpegView != null) {
                         int width = Integer.parseInt(sharedPref.getString("stream_width", "320"));
@@ -236,7 +234,6 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         MIN WARTOSC AXIS_Z (-1, LEWO) / MAX WARTOSC (1, PRAWO)*/
 
         InputDevice mInputDevice = event.getDevice();
-        // inputTextView.append(System.getProperty("line.separator") + "ID: " + mInputDevice.getId() + " - ");
 
         // OBSLUGA LEWEGO SITCKA
         float throttle = getCenteredAxis(event, mInputDevice,
@@ -280,6 +277,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
 
         if (dPAD == -1.0) {
             dPadStr = " D-PAD GÓRA // INICJALIZACJA FLIGHT CONTROLLERA";
+            // PRZYTRZYMAĆ KLAWISZ, DOPÓKI NIE ZAPALI SIĘ DIODA NA KONTROLERZE LOTU!
             if(socketConnection) {
                 droneValues.setInitializationValues();
                 asyncValuesQueue.addLast(droneValues.getValuesSocketString());
@@ -296,39 +294,34 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         }
 
         boolean significantChange = false;
-        int floatToInt;
         if (!czyDpad) {
             if (Math.abs(droneValues.getThrottle() - (droneValues.getCalibratedThrottleValue(throttle))) >= 1) {
-                floatToInt = Integer.parseInt(mNumberFormatter.format(throttle));
-                droneValues.setThrottle(floatToInt);
+                droneValues.setThrottle(Integer.parseInt(mNumberFormatter.format(throttle)));
                 significantChange = true;
                 throttleTxtV.setText(mNumberFormatter.format(droneValues.getThrottle()) + "%");
             }
 
             if (Math.abs(droneValues.getYaw() - (droneValues.getCalibratedHorizontalGenericValue(yaw))) >= 1) {
-                floatToInt = Integer.parseInt(mNumberFormatter.format(yaw));
-                droneValues.setYaw(floatToInt);
+                droneValues.setYaw(Integer.parseInt(mNumberFormatter.format(yaw)));
                 significantChange = true;
                 yawTxtV.setText(mNumberFormatter.format(droneValues.getYaw()) + "%");
             }
 
             if (Math.abs(droneValues.getPitch() - (droneValues.getCalibratedVerticalGenericValue(pitch))) >= 1) {
-                floatToInt = Integer.parseInt(mNumberFormatter.format(pitch));
-                droneValues.setPitch(floatToInt);
+                droneValues.setPitch(Integer.parseInt(mNumberFormatter.format(pitch)));
                 significantChange = true;
                 pitchTxtV.setText(mNumberFormatter.format(droneValues.getPitch()) + "%");
             }
 
             if (Math.abs(droneValues.getRoll() - (droneValues.getCalibratedHorizontalGenericValue(roll))) >= 1) {
-                floatToInt = Integer.parseInt(mNumberFormatter.format(roll));
-                droneValues.setRoll(floatToInt);
+                droneValues.setRoll(Integer.parseInt(mNumberFormatter.format(roll)));
                 significantChange = true;
                 rollTxtV.setText(mNumberFormatter.format(droneValues.getRoll()) + "%");
             }
         } else {
             inputTextView.append(System.getProperty("line.separator") + dPadStr);
         }
-
+        // Jeżeli połączenie jest aktywne i nastąpiła znacząca zmiana - dodaj do kolejki wysyłania.
         if(socketConnection && significantChange){
             asyncValuesQueue.addLast(droneValues.getValuesSocketString());
         }
@@ -486,6 +479,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                 socketButton.setText("Connected!");
                 socketButton.setTextColor(Color.GREEN);
             } else {
+                connectionError = true;
                 socketButton.setText("CONN_ERROR!");
                 socketButton.setTextColor(Color.RED);
             }
