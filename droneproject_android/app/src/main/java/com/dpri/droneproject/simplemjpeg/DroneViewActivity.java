@@ -214,6 +214,13 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         return super.onGenericMotionEvent(event);
     }
 
+    private void setUIaxisValues(){
+        throttleTxtV.setText(mNumberFormatter.format(droneValues.getThrottle()) + "%");
+        yawTxtV.setText(mNumberFormatter.format(droneValues.getYaw()) + "%");
+        pitchTxtV.setText(mNumberFormatter.format(droneValues.getPitch()) + "%");
+        rollTxtV.setText(mNumberFormatter.format(droneValues.getRoll()) + "%");
+    }
+
     private void processJoystickInput(MotionEvent event,
                                       int historyPos) {
 
@@ -280,6 +287,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
             // PRZYTRZYMAĆ KLAWISZ, DOPÓKI NIE ZAPALI SIĘ DIODA NA KONTROLERZE LOTU!
             if(socketConnection) {
                 droneValues.setInitializationValues();
+                setUIaxisValues();
                 asyncValuesQueue.addLast(droneValues.getValuesSocketString());
             }
             czyDpad = true;
@@ -288,6 +296,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
             dPadStr = " D-PAD DÓŁ // RESET WARTOŚCI";
             if(socketConnection) {
                 droneValues = new DroneValues();
+                setUIaxisValues();
                 asyncValuesQueue.addLast(droneValues.getValuesSocketString());
             }
             czyDpad = true;
@@ -298,28 +307,27 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
             if (Math.abs(droneValues.getThrottle() - (droneValues.getCalibratedThrottleValue(throttle))) >= 1) {
                 droneValues.setThrottle(Integer.parseInt(mNumberFormatter.format(throttle)));
                 significantChange = true;
-                throttleTxtV.setText(mNumberFormatter.format(droneValues.getThrottle()) + "%");
             }
 
             if (Math.abs(droneValues.getYaw() - (droneValues.getCalibratedHorizontalGenericValue(yaw))) >= 1) {
                 droneValues.setYaw(Integer.parseInt(mNumberFormatter.format(yaw)));
                 significantChange = true;
-                yawTxtV.setText(mNumberFormatter.format(droneValues.getYaw()) + "%");
             }
 
             if (Math.abs(droneValues.getPitch() - (droneValues.getCalibratedVerticalGenericValue(pitch))) >= 1) {
                 droneValues.setPitch(Integer.parseInt(mNumberFormatter.format(pitch)));
                 significantChange = true;
-                pitchTxtV.setText(mNumberFormatter.format(droneValues.getPitch()) + "%");
             }
 
             if (Math.abs(droneValues.getRoll() - (droneValues.getCalibratedHorizontalGenericValue(roll))) >= 1) {
                 droneValues.setRoll(Integer.parseInt(mNumberFormatter.format(roll)));
                 significantChange = true;
-                rollTxtV.setText(mNumberFormatter.format(droneValues.getRoll()) + "%");
             }
         } else {
             inputTextView.append(System.getProperty("line.separator") + dPadStr);
+        }
+        if(significantChange){
+            setUIaxisValues();
         }
         // Jeżeli połączenie jest aktywne i nastąpiła znacząca zmiana - dodaj do kolejki wysyłania.
         if(socketConnection && significantChange){
