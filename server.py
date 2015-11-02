@@ -6,12 +6,13 @@ import time
 import thread
 import os
 import commands
+import re
 from subprocess import call
 clientPort = 8888
 serverPort = 8887
 pingPort = 8889
 awaiting = closed = emergency = False
-lastThrottleValue = '0=0%'
+lastThrottleValue = '0=25%'
 throttleEmergencyMinVal = 25
 
 def emergencyDownThrottling(placeholder1, placeholder2):
@@ -81,6 +82,8 @@ print 'Socket bind complete'
 
 print 'My IP : ' + commands.getoutput("hostname -i")
 
+regexCheck = re.compile('([0-9]{1,2}=[0-9]{1,3}%,){3,3}[0-9]{1,2}=[0-9]{1,3}%')
+
 while 1:
     versionStringClient, addr = s.recvfrom(1024)
     print 'Connected with ' + addr[0] + ':' + str(addr[1])
@@ -114,12 +117,13 @@ while 1:
                 thread.start_new_thread(pingThreadMethod, addr)
 
             #OBSLUGA STANDARDOWYCH WARTOSCI
-            values = data.split(',')
-            #for value in values:
-                #call('echo ' + value + ' > ' + '/dev/servoblaster', shell=True)
-            lastThrottleValue = values[0]
-            print values
-            s.sendto('RECV_OK', (addr[0], clientPort))
+            if regexCheck.match(data) != None:
+                values = data.split(',')
+                #for value in values:
+                    #call('echo ' + value + ' > ' + '/dev/servoblaster', shell=True)
+                lastThrottleValue = values[0]
+                print values
+                s.sendto('RECV_OK', (addr[0], clientPort))
 
     else:
         s.sendto('VERSION MISMATCH', (addr[0], clientPort))
