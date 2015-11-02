@@ -5,6 +5,7 @@ import sys
 import time
 import thread
 import os
+import commands
 from subprocess import call
 clientPort = 8888
 serverPort = 8887
@@ -77,6 +78,8 @@ except socket.error as msg:
     sys.exit()
 
 print 'Socket bind complete'
+
+print 'My IP : ' + commands.getoutput("hostname -i")
 
 while 1:
     versionStringClient, addr = s.recvfrom(1024)
