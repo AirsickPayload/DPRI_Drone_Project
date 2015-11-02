@@ -116,7 +116,7 @@ while 1:
         s.sendto('VERSION MATCH', (addr[0], clientPort))
         closed = False
         thread.start_new_thread(pingThreadMethod, addr)
-        thread.start_new_thread(lowVoltageGuardThread, addr)
+        thread.start_new_thread(lowVoltageGuardThread)
         while 1:
             if emergency:
                 continue
