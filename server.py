@@ -3,10 +3,14 @@
 import socket
 import sys
 import time
+# led connected by resistor to GPIO 20
+# battery connected (using resistor divider [1kom-1kom]) to GPIO 16 (from white battery cable)
+
 import thread
 import os
 import commands
 import re
+import RPi.GPIO as GPIO
 from subprocess import call
 clientPort = 8888
 serverPort = 8887
@@ -14,6 +18,15 @@ pingPort = 8889
 awaiting = closed = emergency = False
 lastThrottleValue = '0=25%'
 throttleEmergencyMinVal = 25
+lowVoltageGuardSleep = 20	# sekundy
+ledPin = 20
+lipoPin = 16
+raspiPowerPin = 35
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(lipoPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(raspiPowerPin, GPIO.IN)
+GPIO.setup(ledPin, GPIO.OUT)
 
 def emergencyDownThrottling(placeholder1, placeholder2):
     global emergency
@@ -28,6 +41,14 @@ def emergencyDownThrottling(placeholder1, placeholder2):
         #call('echo ' + str(throttlePin) + '=' + str(throttleVal) + '% > ' + '/dev/servoblaster', shell=True)
         time.sleep(0.3)
     emergency = False
+    
+def lowVoltageGuardThread():
+	while 1:
+		if (GPIO.input(lipoPin) or GPIO.input(raspiPowerPin)):
+			GPIO.output(ledPin, True)	# light up LED
+			thread.start_new_thread(emergencyDownThrottling, ('',''))
+			break
+        time.sleep(lowVoltageGuardSleep)	# sprawdzaj stopien naladowania co n sekund
 
 def pingThreadMethod(addr, ignored):
     global closed, emergency
@@ -40,7 +61,7 @@ def pingThreadMethod(addr, ignored):
     #oczekiwanie na odp. ze strony klienta nie moze trwac wiecznie
     pingsocket.settimeout(2) # max 2s
     while 1:
-        time.sleep(1.5) # w przypadku poprawnego rozłączenia odczekać 1.5sek przed ponowną próbą połączenia!
+        time.sleep(1.5) # w przypadku poprawnego rozlaczenia odczekac 1.5sek przed ponowna proba polaczenia!
         if closed:
             pingsocket.close()
             break
@@ -95,6 +116,7 @@ while 1:
         s.sendto('VERSION MATCH', (addr[0], clientPort))
         closed = False
         thread.start_new_thread(pingThreadMethod, addr)
+        thread.start_new_thread(lowVoltageGuardThread)
         while 1:
             if emergency:
                 continue
