@@ -555,7 +555,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         protected Void doInBackground(Void... params) {
             if (DEBUG) Log.d(TAG, "Ping listener started!");
             while(true){
-                if(!socketConnection || !connectionError) { break; }
+                if(!socketConnection || connectionError) { if (DEBUG) Log.d(TAG, "Ping listener break!"); break; }
                 boolean result = droneSocketClient.pingAwaitAndReply();
                 if(!result) { break; }
             }
