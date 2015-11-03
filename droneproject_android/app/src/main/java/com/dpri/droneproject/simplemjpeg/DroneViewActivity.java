@@ -471,7 +471,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            if(connectionError) { droneSocketClient.closeSocket(); connectionError = false; }
+            if(connectionError) { droneSocketClient.closeConnection(); connectionError = false; }
             droneSocketClient = new DroneSocketClient(droneIP, clientPort, serverPort, pingPort);
             return droneSocketClient.confirmVersionCompability();
         }
@@ -555,7 +555,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         protected Void doInBackground(Void... params) {
             if (DEBUG) Log.d(TAG, "Ping listener started!");
             while(true){
-                if(!socketConnection) { break; }
+                if(!socketConnection || !connectionError) { break; }
                 boolean result = droneSocketClient.pingAwaitAndReply();
                 if(!result) { break; }
             }

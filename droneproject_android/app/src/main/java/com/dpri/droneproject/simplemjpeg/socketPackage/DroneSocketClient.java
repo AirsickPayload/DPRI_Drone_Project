@@ -94,7 +94,6 @@ public class DroneSocketClient {
                 return initPingListening();
             } else{
                 if (DEBUG) Log.d(TAG, "VERSION MISMATCH!:" + response);
-                clientSocket.close();
                 return false;
             }
         } catch (Exception e) {
