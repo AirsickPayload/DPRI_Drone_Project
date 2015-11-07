@@ -148,8 +148,7 @@ public class DroneSocketClient {
             pingAliveSocket.close();
             clientSocket.close();
         } catch (Exception e) {
-            e.printStackTrace();
-            if (DEBUG) Log.d(TAG, "Closure of connection failed!");
+            if (DEBUG) Log.d(TAG, "Closure of connection failed! // SERVER MIGHT BE ALREADY UNREACHABLE!");
         }
     }
 

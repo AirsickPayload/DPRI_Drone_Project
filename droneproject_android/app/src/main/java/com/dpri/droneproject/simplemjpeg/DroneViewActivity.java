@@ -516,7 +516,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         @Override
         protected Void doInBackground(Void... params) {
             while (true) {
-                if(!socketConnection) { break; }
+                if(!socketConnection || connectionError) { break; }
 
                 //Przerzedzanie kolejki, gdy wartości jest zbyt wiele
                 removeExcessiveValues(asyncValuesQueue);
@@ -556,8 +556,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
             if (DEBUG) Log.d(TAG, "Ping listener started!");
             while(true){
                 if(!socketConnection || connectionError) { if (DEBUG) Log.d(TAG, "Ping listener break!"); break; }
-                boolean result = droneSocketClient.pingAwaitAndReply();
-                if(!result) { break; }
+                if(!droneSocketClient.pingAwaitAndReply()) { connectionError = true; break; }
             }
             return null;
         }

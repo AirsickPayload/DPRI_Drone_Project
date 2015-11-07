@@ -3,9 +3,6 @@
 import socket
 import sys
 import time
-# led connected by resistor to GPIO 20
-# battery connected (using resistor divider [1kom-1kom]) to GPIO 16 (from white battery cable)
-
 import thread
 import os
 import commands
@@ -16,8 +13,10 @@ clientPort = 8888
 serverPort = 8887
 pingPort = 8889
 awaiting = closed = emergency = False
-lastThrottleValue = '0=25%'
+lastThrottleValue = '0=0%'
 throttleEmergencyMinVal = 25
+# led connected by resistor to GPIO 20
+# battery connected (using resistor divider [1kom-1kom]) to GPIO 16 (from white battery cable)
 lowVoltageGuardSleep = 20	# sekundy
 ledPin = 20
 lipoPin = 16
@@ -29,7 +28,7 @@ GPIO.setup(raspiPowerPin, GPIO.IN)
 GPIO.setup(ledPin, GPIO.OUT)
 
 def emergencyDownThrottling(placeholder1, placeholder2):
-    global emergency
+    global emergency, lastThrottleValue
     #1=XX%
     split = lastThrottleValue.split('=')
     throttlePin = split[0]
@@ -41,7 +40,7 @@ def emergencyDownThrottling(placeholder1, placeholder2):
         #call('echo ' + str(throttlePin) + '=' + str(throttleVal) + '% > ' + '/dev/servoblaster', shell=True)
         time.sleep(0.3)
     emergency = False
-    
+
 def lowVoltageGuardThread():
 	while 1:
 		if (GPIO.input(lipoPin) or GPIO.input(raspiPowerPin)):
@@ -51,7 +50,7 @@ def lowVoltageGuardThread():
         time.sleep(lowVoltageGuardSleep)	# sprawdzaj stopien naladowania co n sekund
 
 def pingThreadMethod(addr, ignored):
-    global closed, emergency
+    global closed, emergency, awaiting
     pingsocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         pingsocket.bind(('', pingPort)) # zamiast socket.gethostname() mozna '', zeby byl osiagalny ze wszystkich interfejsow
@@ -76,7 +75,7 @@ def pingThreadMethod(addr, ignored):
                     print ' PONG!'
                     continue
                 else:
-                    print 'ERROR: ' + pingData
+                    print 'ERROR, PING MISMATCH RESPONSE: ' + pingData
                     emergency = True
                     closed = True
                     pingsocket.close()
@@ -101,7 +100,7 @@ except socket.error as msg:
 
 print 'Socket bind complete'
 
-print 'My IP : ' + commands.getoutput("hostname -i")
+print 'My IP : ' + commands.getoutput("hostname -I")
 
 regexCheck = re.compile('([0-9]{1,2}=[0-9]{1,3}%,){3,3}[0-9]{1,2}=[0-9]{1,3}%')
 
