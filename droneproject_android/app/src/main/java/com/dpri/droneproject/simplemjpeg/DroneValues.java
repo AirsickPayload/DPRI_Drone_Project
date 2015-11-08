@@ -30,6 +30,7 @@ public class DroneValues {
     }
 
     public String getValuesSocketString(){
+        // Tworzenie stringu postaci '1=0%,1=15%,2=55%,6=90%'
         StringBuilder sb = new StringBuilder();
         sb.append(getThrottlePin() + "=" + getThrottle() + "%,");
         sb.append(getYawPin() + "=" + getYaw() + "%,");
@@ -39,7 +40,6 @@ public class DroneValues {
     }
 
     public float getThrottle() {
-
         return throttle;
     }
 

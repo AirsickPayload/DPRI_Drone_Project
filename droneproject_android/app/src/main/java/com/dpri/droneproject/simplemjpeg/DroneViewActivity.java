@@ -56,6 +56,14 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
     private DroneValues droneValues;
     private MjpegView mjpegView = null;
     final Handler handler = new Handler();
+    /*
+        Wartość boolean socketConnection wykorzystywana w obsłudze inicjalizacji połączenia (metoda void connectionInitHandler() ),
+        podczas wysyłania wartości( metoda private void processJoystickInput(...) ) oraz dodatkowo w obsłudze błędów połączenia
+        (podklasy wątku asynchronicznego AsyncServerPingListener oraz AsyncSocketSend).
+
+        Boolean connectionError wykorzystywany wyłącznie do obłsugi błędów połączenia(podklasy wątków
+        AsyncSocketConnect, AsyncServerPingListener oraz AsyncSocketSend.
+     */
     private boolean streamRunning = false, socketConnection = false, connectionError = false;
 
     private TextView inputTextView;
@@ -68,6 +76,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
     private static final int serverPort = 8887;
     private static final int pingPort = 8889;
     private static final int clientPort = 8888;
+    // Obiekt służący do pobierania preferencji/ustawień i nasłuchiwania zmian.
     private SharedPreferences sharedPref;
 
     @Override
@@ -77,22 +86,36 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
 
         initializeUIelements();
 
+        // Inicjalizacja obiektu nasłuchującego eventów z gamepada oraz rozpoczęcie nasłuchiwania.
         mInputManager = InputManagerCompat.Factory.getInputManager(this.getBaseContext());
         mInputManager.registerInputDeviceListener(this, null);
 
         droneValues = new DroneValues();
+        // Rozpoznanie urządzeń typu gamepad i przekazanie ich listy z identyfikatorami do tablicy.
+        // Obecnie niewykorzystywane - zakładamy, że wejście będzie pochodzić tylko z jednego
+        // źródła, więc nie ma sensu dodawać rozróżniania źródła wejścia.
         gamepadIds = findControllers();
 
         mNumberFormatter = NumberFormat.getIntegerInstance();
         sharedPref = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
         sharedPref.registerOnSharedPreferenceChangeListener(this);
         initializeSettingsValues();
+        /*
+            Wyłącznie ostrzeżeń o ewentualnym wykonywaniu operacji sieciowych, IO itp. w głównym wątku.
+            Obecny stan aplikacji nie powinien wywoływać ostrzeżenia (inicjalizacja połączenia, wysyłanie wartosci
+            oraz nasłuchiwanie na PING serwera odbywają się w osobnych wątkach).
+        */
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
+        // Wymuszenie działania głównego layoutu w trybie horyzontalnym.
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
     }
 
     void initializeUIelements() {
+        /*
+            Przypisanie elementów interfejsu do obiektów w kodzie.
+            W przypadku klawiszy również dodanie obsługi zdarzeń wciśnięcia.
+         */
         inputTextView = (TextView) findViewById(R.id.inputTextView);
         inputTextView.setMovementMethod(new ScrollingMovementMethod());
         yawTxtV = (TextView) findViewById(R.id.yawTextView);
@@ -122,6 +145,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                 if (!streamRunning) {
                     mjpegView = (MjpegView) findViewById(R.id.mjpegView);
                     if (mjpegView != null) {
+                        // Pobieramy/przypisujemy wysokość i szerokość streamu na podstawie panelu ustawień aplikacji.
                         int width = Integer.parseInt(sharedPref.getString("stream_width", "320"));
                         int height = Integer.parseInt(sharedPref.getString("stream_height", "240"));
                         mjpegView.setResolution(width, height);
@@ -162,6 +186,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
 
 
     void initializeSettingsValues(){
+        // Inicjalizacja obiektów przechowujących dane z zakładki ustawień.
         droneIP = sharedPref.getString("ip_drona", "");
         urlStream = sharedPref.getString("url_stream", "");
         droneValues.setThrottlePin(Integer.parseInt(sharedPref.getString("pin_throttle", "0")));
@@ -215,6 +240,11 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
     }
 
     private void setUIaxisValues(){
+        /*
+            Metoda wywoływana przez processJoystickInput(...).
+            Służy do formatowania wartości na osiach (pomijamy wartości po przecinku) oraz dodaniu znaku %,
+            po to by ostatecznie przypisać je do elementów interfejsu.
+        */
         throttleTxtV.setText(mNumberFormatter.format(droneValues.getThrottle()) + "%");
         yawTxtV.setText(mNumberFormatter.format(droneValues.getYaw()) + "%");
         pitchTxtV.setText(mNumberFormatter.format(droneValues.getPitch()) + "%");
@@ -242,7 +272,12 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
 
         InputDevice mInputDevice = event.getDevice();
 
-        // OBSLUGA LEWEGO SITCKA
+        /*
+         WARTOŚCI SĄ OD RAZU MNOŻONE PRZEZ 100, ABY UNIKNĄĆ POPEŁNIENIA BŁĘDU W DALSZYM PRZETWARZANIU
+         WARTOŚCI!
+
+         OBSLUGA LEWEGO SITCKA
+        */
         float throttle = getCenteredAxis(event, mInputDevice,
                 MotionEvent.AXIS_Y, historyPos);
         throttle *= 100;
@@ -261,7 +296,12 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                 MotionEvent.AXIS_Z, historyPos);
         roll *= 100;
 
-        // OBSLUGA D-PADA
+        /*
+             OBSLUGA D-PADA
+
+             Obecna implementacja NIE pozwala na wciśnięcie dwóch przycisków D-Pada jednocześnie!
+             W przypadku inicjalizacji należy przytrzymać klawisz - jego puszczenie jest interpretowane jako osobne zdarzenie!
+        */
         float dPAD;
         boolean czyDpad = false;
         String dPadStr = "";
@@ -269,6 +309,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         dPAD = getCenteredAxis(event, mInputDevice,
                 MotionEvent.AXIS_HAT_X, historyPos);
 
+        // OŚ POZIOMA - LEWO/PRAWO
         if (dPAD == -1.0) {
             dPadStr = " D-PAD LEWY";
             czyDpad = true;
@@ -279,6 +320,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
             czyDpad = true;
         }
 
+        // OŚ PIONOWA - GÓRA/DÓŁ
         dPAD = getCenteredAxis(event, mInputDevice,
                 MotionEvent.AXIS_HAT_Y, historyPos);
 
@@ -302,6 +344,10 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
             czyDpad = true;
         }
 
+        /*
+            Jeżeli nie nastąpiło wciśnięcie któregoś z przycisków D-PADA - pobranie wartości z joysticków,
+            sprawdzenie czy na którymkolwiek z nich nastąpiła zmiana wartości >=1.
+         */
         boolean significantChange = false;
         if (!czyDpad) {
             if (Math.abs(droneValues.getThrottle() - (droneValues.getCalibratedThrottleValue(throttle))) >= 1) {
@@ -324,9 +370,10 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                 significantChange = true;
             }
         } else {
-            inputTextView.append(System.getProperty("line.separator") + dPadStr);
+            // W przeciwnym wypadku po prostu wypisz informację o tym jaki klawisz D-Pada został wciśnięty
         }
         if(significantChange){
+            // Jeśli zaszła duża zmiana - zaktualizuj elementy UI.
             setUIaxisValues();
         }
         // Jeżeli połączenie jest aktywne i nastąpiła znacząca zmiana - dodaj do kolejki wysyłania.
@@ -410,6 +457,10 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        /*
+            Metoda wywoływana przy dokonaniu zmianyw zakładce ustawień i powrocie do głównego layoutu.
+            Aktualizuje zmienne przechowujące wartości ustawień.
+         */
         if (key.equals("ip_drona")) {
             droneIP = sharedPreferences.getString("ip_drona","");
             inputTextView.append(System.getProperty("line.separator") + "Zmiana IP na: " + droneIP);
@@ -433,6 +484,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
     }
 
     public void onPause() {
+        // Metoda obługi streamingu - obsługa eventu onPause
         if (DEBUG) Log.d(TAG, "onPause()");
         super.onPause();
         if (mjpegView != null) {
@@ -443,6 +495,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
     }
 
     public void onDestroy() {
+        // Metoda obługi zabicia layoutu.
         if (DEBUG) Log.d(TAG, "onDestroy()");
 
         if (mjpegView != null) {
@@ -453,6 +506,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
     }
 
     public void onStop() {
+        // Metoda obługi zatrzymania layoutu.
         if (DEBUG) Log.d(TAG, "onStop()");
         super.onStop();
     }
@@ -468,11 +522,17 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
     }
 
     private class AsyncSocketConnect extends AsyncTask<Void, Void, Boolean>{
+        /*
+            Podklasa wątku asynchronicznego.
+            Odpowiedzialna za nawiązywanie połączenia z serwerem oraz obsługą zdarzeń związanych z połączniem.
+         */
 
         @Override
         protected Boolean doInBackground(Void... params) {
+            //  Jeżeli wcześniej wystąpił błąd - zamknij połączenie i socket.
             if(connectionError) { droneSocketClient.closeConnection(); connectionError = false; }
             droneSocketClient = new DroneSocketClient(droneIP, clientPort, serverPort, pingPort);
+            // Wynik poniższego wywołania zostanie przekazany metodzie onPostExecute().
             return droneSocketClient.confirmVersionCompability();
         }
 
@@ -480,6 +540,9 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         @Override
         protected void onPostExecute(Boolean result){
             if(result){
+                // Jeżeli połączenie zotanie poprawnie zainicjalizowane.
+                // Zainicjalizuj kolejkę wartości, oraz włącz wątki nasłuchiwacza wiadomości PING serwera
+                // oraz wątek wysyłania wartości z kolejki.
                 asyncValuesQueue = new LinkedList<>();
                 socketConnection = true;
                 new AsyncServerPingListener().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
@@ -516,6 +579,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         @Override
         protected Void doInBackground(Void... params) {
             while (true) {
+                // Zakończ pętlę jeżeli wystąpił błąd w wysyłaniu wartości lub nastąpił problem w wątku AsyncServerPingListener.
                 if(!socketConnection || connectionError) { break; }
 
                 //Przerzedzanie kolejki, gdy wartości jest zbyt wiele
@@ -524,12 +588,13 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                 try {
                     String peekValue = asyncValuesQueue.peekFirst();
                     if (peekValue != null) {
-                        if(!droneSocketClient.sendValues(asyncValuesQueue.removeFirst())){
+                        if (!droneSocketClient.sendValues(asyncValuesQueue.removeFirst())) {
                             socketConnection = false;
                             connectionError = true;
                             break;
                         }
                     }
+                //W celu uniknięcia zatrzymania wątku z powodu nigroźnego błędu pustej kolejki, która mimo starań nadal może wystąpić.
                 } catch (NullPointerException e){
                     continue;
                 }
