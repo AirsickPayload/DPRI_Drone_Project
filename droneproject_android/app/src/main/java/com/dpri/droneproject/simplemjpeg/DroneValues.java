@@ -1,5 +1,7 @@
 package com.dpri.droneproject.simplemjpeg;
 
+import java.text.NumberFormat;
+
 /**
  * Created by alan on 26.09.15.
  */
@@ -7,12 +9,14 @@ public class DroneValues {
 
     private float throttle ,yaw, pitch, roll;
     private int throttlePin, yawPin, pitchPin, rollPin;
+    private NumberFormat mNumberFormatter;
 
     public DroneValues(float throttle, float pitch, float yaw, float roll) {
         this.throttle = throttle;
         this.pitch = pitch;
         this.yaw = yaw;
         this.roll = roll;
+        mNumberFormatter = NumberFormat.getIntegerInstance();
     }
 
     public DroneValues() {
@@ -20,6 +24,7 @@ public class DroneValues {
         this.yaw = 50;
         this.pitch = 50;
         this.roll = 50;
+        mNumberFormatter = NumberFormat.getIntegerInstance();
     }
 
     public void setInitializationValues(){
@@ -32,10 +37,10 @@ public class DroneValues {
     public String getValuesSocketString(){
         // Tworzenie stringu postaci '1=0%,1=15%,2=55%,6=90%'
         StringBuilder sb = new StringBuilder();
-        sb.append(getThrottlePin() + "=" + getThrottle() + "%,");
-        sb.append(getYawPin() + "=" + getYaw() + "%,");
-        sb.append(getPitchPin() + "=" + getPitch() + "%,");
-        sb.append(getRollPin() + "=" + getRoll() + "%");
+        sb.append(getThrottlePin() + "=" + Integer.parseInt(mNumberFormatter.format(getThrottle())) + "%,");
+        sb.append(getYawPin() + "=" + Integer.parseInt(mNumberFormatter.format(getYaw())) + "%,");
+        sb.append(getPitchPin() + "=" + Integer.parseInt(mNumberFormatter.format(getPitch())) + "%,");
+        sb.append(getRollPin() + "=" + Integer.parseInt(mNumberFormatter.format(getPitch())) + "%");
         return sb.toString();
     }
 
