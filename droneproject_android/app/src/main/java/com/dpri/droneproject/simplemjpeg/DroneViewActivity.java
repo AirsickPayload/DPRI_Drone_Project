@@ -148,7 +148,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                         // Pobieramy/przypisujemy wysokość i szerokość streamu na podstawie panelu ustawień aplikacji.
                         int width = Integer.parseInt(sharedPref.getString("stream_width", "320"));
                         int height = Integer.parseInt(sharedPref.getString("stream_height", "240"));
-                        mjpegView.setResolution(width, height);
+                        // mjpegView.setResolution(width, height);
                     }
                     setTitle(R.string.title_connecting);
                     new DoRead().execute(urlStream);
@@ -156,7 +156,6 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                     streamRunning = true;
                 } else {
                     mjpegView.stopPlayback();
-                    mjpegView.freeCameraMemory();
                     streamButton.setText("StartStream");
                     streamRunning = false;
                 }
@@ -488,9 +487,9 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         if (DEBUG) Log.d(TAG, "onPause()");
         super.onPause();
         if (mjpegView != null) {
-            if (mjpegView.isStreaming()) {
+/*            if (mjpegView.isStreaming()) {
                 mjpegView.stopPlayback();
-            }
+            }*/
         }
     }
 
@@ -498,9 +497,9 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         // Metoda obługi zabicia layoutu.
         if (DEBUG) Log.d(TAG, "onDestroy()");
 
-        if (mjpegView != null) {
+/*        if (mjpegView != null) {
             mjpegView.freeCameraMemory();
-        }
+        }*/
 
         super.onDestroy();
     }
@@ -629,47 +628,35 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
 
     public class DoRead extends AsyncTask<String, Void, MjpegInputStream> {
         protected MjpegInputStream doInBackground(String... url) {
+            //TODO: if camera has authentication deal with it and don't just not work
             HttpResponse res = null;
             DefaultHttpClient httpclient = new DefaultHttpClient();
-            HttpParams httpParams = httpclient.getParams();
-            HttpConnectionParams.setConnectionTimeout(httpParams, 5 * 1000);
-            HttpConnectionParams.setSoTimeout(httpParams, 5 * 1000);
-            if (DEBUG) Log.d(TAG, "1. Sending http request");
+            Log.d(TAG, "1. Sending http request");
             try {
                 res = httpclient.execute(new HttpGet(URI.create(url[0])));
-                if (DEBUG)
-                    Log.d(TAG, "2. Request finished, status = " + res.getStatusLine().getStatusCode());
-                if (res.getStatusLine().getStatusCode() == 401) {
+                Log.d(TAG, "2. Request finished, status = " + res.getStatusLine().getStatusCode());
+                if(res.getStatusLine().getStatusCode()==401){
                     //You must turn off camera User Access Control before this will work
                     return null;
                 }
                 return new MjpegInputStream(res.getEntity().getContent());
             } catch (ClientProtocolException e) {
-                if (DEBUG) {
-                    e.printStackTrace();
-                    Log.d(TAG, "Request failed-ClientProtocolException", e);
-                }
+                e.printStackTrace();
+                Log.d(TAG, "Request failed-ClientProtocolException", e);
                 //Error connecting to camera
             } catch (IOException e) {
-                if (DEBUG) {
-                    e.printStackTrace();
-                    Log.d(TAG, "Request failed-IOException", e);
-                }
+                e.printStackTrace();
+                Log.d(TAG, "Request failed-IOException", e);
                 //Error connecting to camera
             }
+
             return null;
         }
 
         protected void onPostExecute(MjpegInputStream result) {
             mjpegView.setSource(result);
-            if (result != null) {
-                result.setSkip(1);
-                setTitle(R.string.app_name);
-            } else {
-                setTitle(R.string.title_disconnected);
-            }
             mjpegView.setDisplayMode(MjpegView.SIZE_BEST_FIT);
-            mjpegView.showFps(false);
+            mjpegView.showFps(true);
         }
     }
 
