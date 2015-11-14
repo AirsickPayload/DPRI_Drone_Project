@@ -156,6 +156,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                     streamRunning = true;
                 } else {
                     mjpegView.stopPlayback();
+                    mjpegView = null;
                     streamButton.setText("StartStream");
                     streamRunning = false;
                 }
