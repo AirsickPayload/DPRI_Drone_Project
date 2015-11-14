@@ -41,15 +41,19 @@ public class DroneSocketClient {
         try {
             srvAddr = InetAddress.getByName(serverAddress);
         } catch (UnknownHostException e) {
-            e.printStackTrace();
-            if (DEBUG) Log.d(TAG, "ERROR: UNKNOWN HOST!");
+            if (DEBUG){
+                e.printStackTrace();
+                Log.d(TAG, "ERROR: UNKNOWN HOST!");
+            }
         }
         try {
             clientSocket = new DatagramSocket(clientPort);
             clientSocket.setSoTimeout(packetTIMEOUT);
         } catch (SocketException e) {
-            e.printStackTrace();
-            if (DEBUG) Log.d(TAG, "SOCKET BIND ERROR!");
+            if (DEBUG){
+                e.printStackTrace();
+                Log.d(TAG, "CLIENTSOCKET BIND ERROR!");
+            }
         }
         inData = new byte[1024];
         outData = new byte[1024];
@@ -74,8 +78,10 @@ public class DroneSocketClient {
                 return false;
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            if (DEBUG) Log.d(TAG, "Error sending values to server!");
+            if (DEBUG){
+                e.printStackTrace();
+                Log.d(TAG, "Error sending values to server!");
+            }
             return false;
         }
     }
@@ -97,8 +103,10 @@ public class DroneSocketClient {
                 return false;
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            if (DEBUG) Log.d(TAG, "Error during exchange of compability strings");
+            if (DEBUG){
+                e.printStackTrace();
+                Log.d(TAG, "Error during exchange of compability strings");
+            }
             return false;
         }
     }
@@ -111,8 +119,10 @@ public class DroneSocketClient {
             pingInPacket = new DatagramPacket(pingData, pingData.length);
             return true;
         } catch (SocketException e){
-            e.printStackTrace();
-            if (DEBUG) Log.d(TAG, "PING-SOCKET BIND ERROR!");
+            if (DEBUG) {
+                e.printStackTrace();
+                Log.d(TAG, "PING-SOCKET BIND ERROR!");
+            }
             return false;
         }
     }
@@ -129,30 +139,35 @@ public class DroneSocketClient {
                 return true;
             } else{
                 if (DEBUG) Log.d(TAG, "UNKNOWN PING MESSAGE:" + response);
-                pingAliveSocket.close();
                 return false;
             }
         } catch(Exception e){
-            e.printStackTrace();
-            pingAliveSocket.close();
-            if (DEBUG) Log.d(TAG, "PING SOCKET ERROR / MAYBE IT'S ALREADY CLOSED?");
+            if (DEBUG){
+                e.printStackTrace();
+                Log.d(TAG, "PING SOCKET ERROR / MAYBE IT'S ALREADY CLOSED?");
+            }
             return false;
         }
     }
 
     public void closeConnection(){
         try {
-            outData = "CONN_CLOSE".getBytes("UTF-8");
-            outPacket = new DatagramPacket(outData, outData.length, srvAddr, serverPort);
-            clientSocket.send(outPacket);
-            pingAliveSocket.close();
-            clientSocket.close();
+            if(pingAliveSocket != null){
+                if(!pingAliveSocket.isClosed()) { pingAliveSocket.close(); }
+            }
+            if(clientSocket != null) {
+                if (!clientSocket.isClosed()) {
+                    outData = "CONN_CLOSE".getBytes("UTF-8");
+                    outPacket = new DatagramPacket(outData, outData.length, srvAddr, serverPort);
+                    clientSocket.send(outPacket);
+                    clientSocket.close();
+                }
+            }
         } catch (Exception e) {
-            if (DEBUG) Log.d(TAG, "Closure of connection failed! // SERVER MIGHT BE ALREADY UNREACHABLE!");
+            if (DEBUG){
+                e.printStackTrace();
+                Log.d(TAG, "Closure of connection failed! // SERVER MIGHT BE ALREADY UNREACHABLE!");
+            }
         }
-    }
-
-    public void closeSocket(){
-        clientSocket.close();
     }
 }

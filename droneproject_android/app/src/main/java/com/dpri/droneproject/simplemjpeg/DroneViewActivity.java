@@ -156,7 +156,6 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                     streamRunning = true;
                 } else {
                     mjpegView.stopPlayback();
-                    mjpegView = null;
                     streamButton.setText("StartStream");
                     streamRunning = false;
                 }
@@ -488,26 +487,27 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         if (DEBUG) Log.d(TAG, "onPause()");
         super.onPause();
         if (mjpegView != null) {
-/*            if (mjpegView.isStreaming()) {
+            if (mjpegView != null) {
                 mjpegView.stopPlayback();
-            }*/
+            }
         }
     }
 
     public void onDestroy() {
         // Metoda obługi zabicia layoutu.
         if (DEBUG) Log.d(TAG, "onDestroy()");
-
-/*        if (mjpegView != null) {
-            mjpegView.freeCameraMemory();
-        }*/
-
+        if (mjpegView != null) {
+            mjpegView.stopPlayback();
+        }
         super.onDestroy();
     }
 
     public void onStop() {
         // Metoda obługi zatrzymania layoutu.
         if (DEBUG) Log.d(TAG, "onStop()");
+        if (mjpegView != null) {
+            mjpegView.stopPlayback();
+        }
         super.onStop();
     }
 
@@ -607,7 +607,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                 inputTextView.append(System.getProperty("line.separator") + "Zakończono wysyłanie w tle");
             }else {
                 inputTextView.append(System.getProperty("line.separator") + "Błąd podczas wysyłania wartości! Próbuję wznowić połączenie...");
-                socketButton.setText("ERROR");
+                socketButton.setText("CONN_ERROR");
                 socketButton.setTextColor(Color.RED);
                 new AsyncSocketConnect().execute();
             }
@@ -621,7 +621,11 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
             if (DEBUG) Log.d(TAG, "Ping listener started!");
             while(true){
                 if(!socketConnection || connectionError) { if (DEBUG) Log.d(TAG, "Ping listener break!"); break; }
-                if(!droneSocketClient.pingAwaitAndReply()) { connectionError = true; break; }
+                if(!droneSocketClient.pingAwaitAndReply()) {
+                    socketConnection = false;
+                    connectionError = true;
+                    break;
+                }
             }
             return null;
         }
