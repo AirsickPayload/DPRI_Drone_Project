@@ -37,14 +37,15 @@ def emergencyDownThrottling(placeholder1, placeholder2):
     while throttleVal > throttleEmergencyMinVal:
         throttleVal -= 5
         print throttleVal
-        #call('echo ' + str(throttlePin) + '=' + str(throttleVal) + '% > ' + '/dev/servoblaster', shell=True)
+        call('echo ' + str(throttlePin) + '=' + str(throttleVal) + '% > ' + '/dev/servoblaster', shell=True)
         time.sleep(0.3)
     emergency = False
 
-def lowVoltageGuardThread():
+def lowVoltageGuardThread(placeholder1, placeholder2):
+	GPIO.output(ledPin, True)	# light up LED
 	while 1:
-		if (GPIO.input(lipoPin) or GPIO.input(raspiPowerPin)):
-			GPIO.output(ledPin, True)	# light up LED
+		if not (GPIO.input(lipoPin)):
+			GPIO.output(ledPin, False)	# light up LED
 			thread.start_new_thread(emergencyDownThrottling, ('',''))
 			break
         time.sleep(lowVoltageGuardSleep)	# sprawdzaj stopien naladowania co n sekund
@@ -55,7 +56,7 @@ def pingThreadMethod(addr, ignored):
     try:
         pingsocket.bind(('', pingPort)) # zamiast socket.gethostname() mozna '', zeby byl osiagalny ze wszystkich interfejsow
     except socket.error as msg:
-        print 'PingSocket bind failed. Error code: ' + str(msg[0]) + ' Message ' + msg[1]
+        print 'PingSocket bind failed. Poprzedni wątek pingujący wciąż pracuje - OK' + str(msg[0]) + ' Message ' + msg[1]
         sys.exit()
     #oczekiwanie na odp. ze strony klienta nie moze trwac wiecznie
     pingsocket.settimeout(2) # max 2s
@@ -115,7 +116,7 @@ while 1:
         s.sendto('VERSION MATCH', (addr[0], clientPort))
         closed = False
         thread.start_new_thread(pingThreadMethod, addr)
-        thread.start_new_thread(lowVoltageGuardThread)
+        thread.start_new_thread(lowVoltageGuardThread, ('',''))
         while 1:
             if emergency:
                 continue
@@ -140,8 +141,8 @@ while 1:
             #OBSLUGA STANDARDOWYCH WARTOSCI
             if regexCheck.match(data) != None:
                 values = data.split(',')
-                #for value in values:
-                    #call('echo ' + value + ' > ' + '/dev/servoblaster', shell=True)
+                for value in values:
+                    call('echo ' + value + ' > ' + '/dev/servoblaster', shell=True)
                 lastThrottleValue = values[0]
                 print values
                 s.sendto('RECV_OK', (addr[0], clientPort))
