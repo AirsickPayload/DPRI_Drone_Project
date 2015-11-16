@@ -119,8 +119,6 @@ public class DroneSettingsActivity extends PreferenceActivity {
         // to reflect the new value, per the Android Design guidelines.
         bindPreferenceSummaryToValue(findPreference("ip_drona"));
         bindPreferenceSummaryToValue(findPreference("url_stream"));
-        bindPreferenceSummaryToValue(findPreference("stream_width"));
-        bindPreferenceSummaryToValue(findPreference("stream_height"));
         bindPreferenceSummaryToValue(findPreference("pin_throttle"));
         bindPreferenceSummaryToValue(findPreference("pin_yaw"));
         bindPreferenceSummaryToValue(findPreference("pin_pitch"));
@@ -259,8 +257,6 @@ public class DroneSettingsActivity extends PreferenceActivity {
             // guidelines.
             bindPreferenceSummaryToValue(findPreference("ip_drona"));
             bindPreferenceSummaryToValue(findPreference("url_stream"));
-            bindPreferenceSummaryToValue(findPreference("stream_width"));
-            bindPreferenceSummaryToValue(findPreference("stream_height"));
         }
     }
 

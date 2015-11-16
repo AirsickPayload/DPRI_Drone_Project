@@ -33,7 +33,7 @@ public class DroneSocketClient {
     byte[] outData;
     byte[] pingData;
 
-    public DroneSocketClient(String serverAddress,int clientPort, int serverPort, int pingPort) {
+    public DroneSocketClient(String serverAddress,int clientPort, int serverPort, int pingPort) throws DroneSocketClientException {
         this.serverAddress = serverAddress;
         this.clientPort = clientPort;
         this.pingPort = pingPort;
@@ -44,6 +44,7 @@ public class DroneSocketClient {
             if (DEBUG){
                 e.printStackTrace();
                 Log.d(TAG, "ERROR: UNKNOWN HOST!");
+                throw new DroneSocketClientException("");
             }
         }
         try {
@@ -53,6 +54,7 @@ public class DroneSocketClient {
             if (DEBUG){
                 e.printStackTrace();
                 Log.d(TAG, "CLIENTSOCKET BIND ERROR!");
+                throw new DroneSocketClientException("");
             }
         }
         inData = new byte[1024];
@@ -169,5 +171,17 @@ public class DroneSocketClient {
                 Log.d(TAG, "Closure of connection failed! // SERVER MIGHT BE ALREADY UNREACHABLE!");
             }
         }
+    }
+
+    public class DroneSocketClientException extends Exception {
+
+        public DroneSocketClientException(String message) {
+            super(message);
+        }
+
+        public DroneSocketClientException(String message, Throwable throwable) {
+            super(message, throwable);
+        }
+
     }
 }

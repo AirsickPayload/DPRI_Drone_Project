@@ -22,6 +22,7 @@ import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -107,6 +108,8 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         */
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
+        // Wyłącz wyłączanie się ekranu po pewnym czasie bezczynności.
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         // Wymuszenie działania głównego layoutu w trybie horyzontalnym.
         this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
     }
@@ -144,12 +147,6 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
             public void onClick(View view) {
                 if (!streamRunning) {
                     mjpegView = (MjpegView) findViewById(R.id.mjpegView);
-                    if (mjpegView != null) {
-                        // Pobieramy/przypisujemy wysokość i szerokość streamu na podstawie panelu ustawień aplikacji.
-                        int width = Integer.parseInt(sharedPref.getString("stream_width", "320"));
-                        int height = Integer.parseInt(sharedPref.getString("stream_height", "240"));
-                        // mjpegView.setResolution(width, height);
-                    }
                     setTitle(R.string.title_connecting);
                     new DoRead().execute(urlStream);
                     streamButton.setText("StopStream");
@@ -487,9 +484,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         if (DEBUG) Log.d(TAG, "onPause()");
         super.onPause();
         if (mjpegView != null) {
-            if (mjpegView != null) {
-                mjpegView.stopPlayback();
-            }
+            mjpegView.stopPlayback();
         }
     }
 
@@ -531,7 +526,11 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         protected Boolean doInBackground(Void... params) {
             //  Jeżeli wcześniej wystąpił błąd - zamknij połączenie i socket.
             if(connectionError) { droneSocketClient.closeConnection(); connectionError = false; }
-            droneSocketClient = new DroneSocketClient(droneIP, clientPort, serverPort, pingPort);
+            try {
+                droneSocketClient = new DroneSocketClient(droneIP, clientPort, serverPort, pingPort);
+            }catch (DroneSocketClient.DroneSocketClientException e){
+                return false;
+            }
             // Wynik poniższego wywołania zostanie przekazany metodzie onPostExecute().
             return droneSocketClient.confirmVersionCompability();
         }
@@ -565,12 +564,10 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
 
     private void removeExcessiveValues(LinkedList<String> queue){
         int qSize = queue.size();
-        if(qSize >= 75){
+        if(qSize >= 50){
             dropElementsInQueue(queue, 10);
-        }else if(qSize >= 50){
-            dropElementsInQueue(queue, 5);
         }else if(qSize >= 25){
-            dropElementsInQueue(queue, 2);
+            dropElementsInQueue(queue, 5);
         }
     }
 
@@ -582,7 +579,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                 // Zakończ pętlę jeżeli wystąpił błąd w wysyłaniu wartości lub nastąpił problem w wątku AsyncServerPingListener.
                 if(!socketConnection || connectionError) { break; }
 
-                //Przerzedzanie kolejki, gdy wartości jest zbyt wiele
+                //Przerzedzanie kolejki, gdy wartości jest zbyt wiele.
                 removeExcessiveValues(asyncValuesQueue);
 
                 try {
@@ -596,7 +593,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                     }
                 //W celu uniknięcia zatrzymania wątku z powodu nigroźnego błędu pustej kolejki, która mimo starań nadal może wystąpić.
                 } catch (NullPointerException e){
-                    continue;
+                    // Kontynuuj pętlę
                 }
             }
             return null;
