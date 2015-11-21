@@ -123,6 +123,9 @@ public class DroneSettingsActivity extends PreferenceActivity {
         bindPreferenceSummaryToValue(findPreference("pin_yaw"));
         bindPreferenceSummaryToValue(findPreference("pin_pitch"));
         bindPreferenceSummaryToValue(findPreference("pin_roll"));
+        bindPreferenceSummaryToValue(findPreference("queue_50"));
+        bindPreferenceSummaryToValue(findPreference("queue_25"));
+        bindPreferenceSummaryToValue(findPreference("queue_10"));
        // bindPreferenceSummaryToValue(findPreference("notifications_new_message_ringtone"));
     }
 
@@ -297,6 +300,9 @@ public class DroneSettingsActivity extends PreferenceActivity {
             bindPreferenceSummaryToValue(findPreference("pin_yaw"));
             bindPreferenceSummaryToValue(findPreference("pin_pitch"));
             bindPreferenceSummaryToValue(findPreference("pin_roll"));
+            bindPreferenceSummaryToValue(findPreference("queue_50"));
+            bindPreferenceSummaryToValue(findPreference("queue_25"));
+            bindPreferenceSummaryToValue(findPreference("queue_10"));
         }
     }
 }

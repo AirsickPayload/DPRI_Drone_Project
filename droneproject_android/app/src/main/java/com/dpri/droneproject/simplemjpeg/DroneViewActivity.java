@@ -80,6 +80,8 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
     // Obiekt służący do pobierania preferencji/ustawień i nasłuchiwania zmian.
     private SharedPreferences sharedPref;
 
+    private int queue50, queue25, queue10;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -457,25 +459,39 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
             Metoda wywoływana przy dokonaniu zmianyw zakładce ustawień i powrocie do głównego layoutu.
             Aktualizuje zmienne przechowujące wartości ustawień.
          */
-        if (key.equals("ip_drona")) {
-            droneIP = sharedPreferences.getString("ip_drona","");
-            inputTextView.append(System.getProperty("line.separator") + "Zmiana IP na: " + droneIP);
-        }
-        if (key.equals("url_stream")) {
-            urlStream = sharedPreferences.getString("url_stream", "");
-            inputTextView.append(System.getProperty("line.separator") + "Zmiana URL streamu na: " + urlStream);
-        }
-        if(key.equals("pin_throttle")){
-            droneValues.setThrottlePin(Integer.parseInt(sharedPref.getString("pin_throttle", "0")));
-        }
-        if(key.equals("pin_yaw")){
-            droneValues.setYawPin(Integer.parseInt(sharedPref.getString("pin_yaw", "1")));
-        }
-        if(key.equals("pin_pitch")){
-            droneValues.setPitchPin(Integer.parseInt(sharedPref.getString("pin_pitch", "2")));
-        }
-        if(key.equals("pin_roll")){
-            droneValues.setRollPin(Integer.parseInt(sharedPref.getString("pin_roll", "6")));
+        switch(key){
+            case "ip_drona":
+                droneIP = sharedPreferences.getString("ip_drona","");
+                inputTextView.append(System.getProperty("line.separator") + "Zmiana IP na: " + droneIP);
+                break;
+            case "url_stream":
+                urlStream = sharedPreferences.getString("url_stream", "");
+                inputTextView.append(System.getProperty("line.separator") + "Zmiana URL streamu na: " + urlStream);
+                break;
+            case "pin_throttle":
+                droneValues.setThrottlePin(Integer.parseInt(sharedPref.getString("pin_throttle", "0")));
+                break;
+            case "pin_yaw":
+                droneValues.setYawPin(Integer.parseInt(sharedPref.getString("pin_yaw", "1")));
+                break;
+            case "pin_pitch":
+                droneValues.setPitchPin(Integer.parseInt(sharedPref.getString("pin_pitch", "2")));
+                break;
+            case "pin_roll":
+                droneValues.setRollPin(Integer.parseInt(sharedPref.getString("pin_roll", "6")));
+                break;
+            case "queue_50":
+                queue50 = Integer.parseInt(sharedPref.getString("queue_50", "10"));
+                inputTextView.append(System.getProperty("line.separator") + "Kolejka >= 50 - usuwanie " + queue50 + " wartości");
+                break;
+            case "queue_25":
+                queue25 = Integer.parseInt(sharedPref.getString("queue_25", "5"));
+                inputTextView.append(System.getProperty("line.separator") + "Kolejka >= 25 - usuwanie " + queue25 + " wartości");
+                break;
+            case "queue_10":
+                queue10 = Integer.parseInt(sharedPref.getString("queue_10", "1"));
+                inputTextView.append(System.getProperty("line.separator") + "Kolejka >= 10 - usuwanie " + queue10 + " wartości");
+                break;
         }
     }
 
@@ -565,9 +581,11 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
     private void removeExcessiveValues(LinkedList<String> queue){
         int qSize = queue.size();
         if(qSize >= 50){
-            dropElementsInQueue(queue, 10);
+            dropElementsInQueue(queue, queue50);
         }else if(qSize >= 25){
-            dropElementsInQueue(queue, 5);
+            dropElementsInQueue(queue, queue25);
+        }else if(qSize >= 10){
+            dropElementsInQueue(queue, queue10);
         }
     }
 

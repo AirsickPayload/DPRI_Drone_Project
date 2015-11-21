@@ -39,4 +39,31 @@
         android:inputType="numberDecimal"
         android:singleLine="true"
         android:maxLines="1" />
+
+    <EditTextPreference
+        android:key="queue_50"
+        android:title="Kolejka >= 50 pozycji - liczba usunięć"
+        android:defaultValue="10"
+        android:selectAllOnFocus="true"
+        android:inputType="numberDecimal"
+        android:singleLine="true"
+        android:maxLines="1" />
+
+    <EditTextPreference
+        android:key="queue_25"
+        android:title="Kolejka >= 25 pozycji - liczba usunięć"
+        android:defaultValue="5"
+        android:selectAllOnFocus="true"
+        android:inputType="numberDecimal"
+        android:singleLine="true"
+        android:maxLines="1" />
+
+    <EditTextPreference
+        android:key="queue_10"
+        android:title="Kolejka >= 10 pozycji - liczba usunięć"
+        android:defaultValue="1"
+        android:selectAllOnFocus="true"
+        android:inputType="numberDecimal"
+        android:singleLine="true"
+        android:maxLines="1" />
 </PreferenceScreen>
