@@ -191,6 +191,9 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         droneValues.setYawPin(Integer.parseInt(sharedPref.getString("pin_yaw", "1")));
         droneValues.setPitchPin(Integer.parseInt(sharedPref.getString("pin_pitch", "2")));
         droneValues.setRollPin(Integer.parseInt(sharedPref.getString("pin_roll", "6")));
+        queue10 = Integer.parseInt(sharedPref.getString("queue_10", "1"));
+        queue25 = Integer.parseInt(sharedPref.getString("queue_25", "5"));
+        queue50 = Integer.parseInt(sharedPref.getString("queue_50", "10"));
     }
 
     @TargetApi(Build.VERSION_CODES.GINGERBREAD)
@@ -348,22 +351,22 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
          */
         boolean significantChange = false;
         if (!czyDpad) {
-            if (Math.abs(droneValues.getThrottle() - (droneValues.getCalibratedThrottleValue(throttle))) >= 1) {
+            if (Math.abs(droneValues.getThrottle() - (droneValues.getCalibratedThrottleValue(throttle))) >= 2) {
                 droneValues.setThrottle(Integer.parseInt(mNumberFormatter.format(throttle)));
                 significantChange = true;
             }
 
-            if (Math.abs(droneValues.getYaw() - (droneValues.getCalibratedHorizontalGenericValue(yaw))) >= 1) {
+            if (Math.abs(droneValues.getYaw() - (droneValues.getCalibratedHorizontalGenericValue(yaw))) >= 2) {
                 droneValues.setYaw(Integer.parseInt(mNumberFormatter.format(yaw)));
                 significantChange = true;
             }
 
-            if (Math.abs(droneValues.getPitch() - (droneValues.getCalibratedVerticalGenericValue(pitch))) >= 1) {
+            if (Math.abs(droneValues.getPitch() - (droneValues.getCalibratedVerticalGenericValue(pitch))) >= 2) {
                 droneValues.setPitch(Integer.parseInt(mNumberFormatter.format(pitch)));
                 significantChange = true;
             }
 
-            if (Math.abs(droneValues.getRoll() - (droneValues.getCalibratedHorizontalGenericValue(roll))) >= 1) {
+            if (Math.abs(droneValues.getRoll() - (droneValues.getCalibratedHorizontalGenericValue(roll))) >= 2) {
                 droneValues.setRoll(Integer.parseInt(mNumberFormatter.format(roll)));
                 significantChange = true;
             }
