@@ -22,6 +22,7 @@ import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -84,9 +85,12 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Usunięcie belki z informacją o nazwie aplikacji.
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.drone_input_window);
-
+        // TODO: ZMIENIĆ PRZYPIĘCIE ELEMENTÓW UI NA NOWY LAYOUT!
+        //this.setContentView(R.layout.drone_main_window_v2);
         initializeUIelements();
 
         // Inicjalizacja obiektu nasłuchującego eventów z gamepada oraz rozpoczęcie nasłuchiwania.

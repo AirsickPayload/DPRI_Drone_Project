@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:weightSum="1"
+    style="@android:style/Theme.Light">
+
+
+    <LinearLayout android:id="@+id/footer" android:layout_width="fill_parent"
+        android:layout_height="35dp" android:orientation="horizontal"
+        android:layout_alignParentBottom="true" style="@android:style/ButtonBar"
+        android:background="@drawable/border2"
+        >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Yaw: 50"
+            android:layout_gravity="left"
+            android:id="@+id/textYaw"
+            android:layout_weight="1"
+            />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Pitch: 50"
+            android:id="@+id/textPitch"
+            android:layout_weight="1" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Roll: 50"
+            android:id="@+id/textRoll"
+            android:layout_weight="1" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Throttle: 50"
+            android:id="@+id/textThrottle"
+            android:layout_weight="1" />
+
+
+        <ImageView
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:id="@+id/imageView6"
+            android:layout_gravity="right"
+            android:src="@drawable/green" />
+    </LinearLayout>
+
+    <LinearLayout android:id="@+id/header" android:layout_width="fill_parent"
+        android:layout_height="40dp" android:orientation="horizontal"
+        android:layout_alignParentTop="true" android:background="@drawable/border2"
+        style="@android:style/ButtonBar">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Some status information."
+            android:id="@+id/statusText"
+            android:layout_weight=".46" />
+
+        <ImageButton android:id="@+id/connectButton" android:layout_width="5dp"
+            android:layout_height="wrap_content" android:layout_weight=".18"
+            android:src="@drawable/connect" />
+
+        <ImageButton android:id="@+id/streamlButton" android:layout_width="5dp"
+            android:layout_height="wrap_content" android:layout_weight=".18"
+            android:src="@drawable/stream" />
+
+        <ImageButton android:id="@+id/settingsButton" android:layout_width="5dp"
+            android:layout_height="wrap_content" android:layout_weight=".18"
+            android:layout_gravity="right" android:src="@drawable/settings" />
+    </LinearLayout>
+
+
+    <com.dpri.droneproject.simplemjpeg.MjpegView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/mjpegView"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_above="@+id/footer"
+        android:layout_below="@+id/header" />
+
+
+
+</RelativeLayout>
