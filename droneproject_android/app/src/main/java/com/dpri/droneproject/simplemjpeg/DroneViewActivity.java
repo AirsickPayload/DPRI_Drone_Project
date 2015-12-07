@@ -26,6 +26,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.dpri.droneproject.simplemjpeg.inputmanagercompat.InputManagerCompat;
@@ -71,7 +72,9 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
     private TextView inputTextView;
     private TextView yawTxtV, throttleTxtV, rollTxtV, pitchTxtV;
     private ImageButton settingsButton;
-    private Button streamButton, socketButton;
+    private ImageButton streamButton;
+    private ImageButton socketButton;
+    private ImageView connectionIcon;
 
     private String urlStream, droneIP;
     private LinkedList<String> asyncValuesQueue;
@@ -88,9 +91,9 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         // Usunięcie belki z informacją o nazwie aplikacji.
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
-        this.setContentView(R.layout.drone_input_window);
+        //this.setContentView(R.layout.drone_input_window);
         // TODO: ZMIENIĆ PRZYPIĘCIE ELEMENTÓW UI NA NOWY LAYOUT!
-        //this.setContentView(R.layout.drone_main_window_v2);
+        this.setContentView(R.layout.drone_main_window_v2);
         initializeUIelements();
 
         // Inicjalizacja obiektu nasłuchującego eventów z gamepada oraz rozpoczęcie nasłuchiwania.
@@ -125,16 +128,16 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
             Przypisanie elementów interfejsu do obiektów w kodzie.
             W przypadku klawiszy również dodanie obsługi zdarzeń wciśnięcia.
          */
-        inputTextView = (TextView) findViewById(R.id.inputTextView);
+        inputTextView = (TextView) findViewById(R.id.statusText);
         inputTextView.setMovementMethod(new ScrollingMovementMethod());
-        yawTxtV = (TextView) findViewById(R.id.yawTextView);
-        yawTxtV.setText("50%");
-        throttleTxtV = (TextView) findViewById(R.id.throttleTextView);
-        throttleTxtV.setText("0%");
-        rollTxtV = (TextView) findViewById(R.id.rollTextView);
-        rollTxtV.setText("50%");
-        pitchTxtV = (TextView) findViewById(R.id.pitchTextView);
-        pitchTxtV.setText("50%");
+        yawTxtV = (TextView) findViewById(R.id.textYaw);
+        yawTxtV.setText("Yaw: 50%");
+        throttleTxtV = (TextView) findViewById(R.id.textThrottle);
+        throttleTxtV.setText("Throttle: 0%");
+        rollTxtV = (TextView) findViewById(R.id.textRoll);
+        rollTxtV.setText("Roll: 50%");
+        pitchTxtV = (TextView) findViewById(R.id.textPitch);
+        pitchTxtV.setText("Pitch: 50%");
         settingsButton = (ImageButton) findViewById(R.id.settingsButton);
         //Dodanie obsługi otwarcia Okna Ustawień
         settingsButton.setOnClickListener(new View.OnClickListener() {
@@ -146,7 +149,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
             }
         });
         //Dodanie obsługi rozpoczęcia i zatrzymania streamingu
-        streamButton = (Button) findViewById(R.id.streamButton);
+        streamButton = (ImageButton) findViewById(R.id.streamlButton);
         streamButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -155,17 +158,17 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                     mjpegView = (MjpegView) findViewById(R.id.mjpegView);
                     setTitle(R.string.title_connecting);
                     new DoRead().execute(urlStream);
-                    streamButton.setText("StopStream");
+                    inputTextView.append(System.getProperty("line.separator") + "Rozpoczynam streaming...");
                     streamRunning = true;
                 } else {
+                    inputTextView.append(System.getProperty("line.separator") + "Zatrzymuję streaming...");
                     mjpegView.stopPlayback();
-                    streamButton.setText("StartStream");
                     streamRunning = false;
                 }
             }
         });
         // Obsługa łącznia się ze zdalnym serwerem
-        socketButton = (Button) findViewById(R.id.socketButton);
+        socketButton = (ImageButton) findViewById(R.id.connectButton);
         socketButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -173,6 +176,8 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                 connectionInitHandler();
             }
         });
+        connectionIcon = (ImageView) findViewById(R.id.imageView6);
+        connectionIcon.setImageResource(R.drawable.yellow);
     }
 
     void connectionInitHandler(){
@@ -181,8 +186,8 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         } else {
             socketConnection = false;
             droneSocketClient.closeConnection();
-            socketButton.setText("Disconnected");
-            socketButton.setTextColor(Color.YELLOW);
+            inputTextView.append(System.getProperty("line.separator") + "Połączenie zakończone.");
+            connectionIcon.setImageResource(R.drawable.yellow);
         }
     }
 
@@ -250,10 +255,10 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
             Służy do formatowania wartości na osiach (pomijamy wartości po przecinku) oraz dodaniu znaku %,
             po to by ostatecznie przypisać je do elementów interfejsu.
         */
-        throttleTxtV.setText(mNumberFormatter.format(droneValues.getThrottle()) + "%");
-        yawTxtV.setText(mNumberFormatter.format(droneValues.getYaw()) + "%");
-        pitchTxtV.setText(mNumberFormatter.format(droneValues.getPitch()) + "%");
-        rollTxtV.setText(mNumberFormatter.format(droneValues.getRoll()) + "%");
+        throttleTxtV.setText("Throttle: " + mNumberFormatter.format(droneValues.getThrottle()) + "%");
+        yawTxtV.setText("Yaw : " + mNumberFormatter.format(droneValues.getYaw()) + "%");
+        pitchTxtV.setText("Pitch: " + mNumberFormatter.format(droneValues.getPitch()) + "%");
+        rollTxtV.setText("Roll: " + mNumberFormatter.format(droneValues.getRoll()) + "%");
     }
 
     private void processJoystickInput(MotionEvent event,
@@ -374,16 +379,14 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                 droneValues.setRoll(Integer.parseInt(mNumberFormatter.format(roll)));
                 significantChange = true;
             }
-        } else {
-            // W przeciwnym wypadku po prostu wypisz informację o tym jaki klawisz D-Pada został wciśnięty
         }
         if(significantChange){
             // Jeśli zaszła duża zmiana - zaktualizuj elementy UI.
             setUIaxisValues();
-        }
-        // Jeżeli połączenie jest aktywne i nastąpiła znacząca zmiana - dodaj do kolejki wysyłania.
-        if(socketConnection && significantChange){
-            asyncValuesQueue.addLast(droneValues.getValuesSocketString());
+            if(socketConnection) {
+                // Jeżeli dodatkowo połączenie jest aktywne - dodaj do kolejki wysyłania.
+                asyncValuesQueue.addLast(droneValues.getValuesSocketString());
+            }
         }
     }
 
@@ -569,12 +572,12 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                 socketConnection = true;
                 new AsyncServerPingListener().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                 new AsyncSocketSend().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-                socketButton.setText("Connected!");
-                socketButton.setTextColor(Color.GREEN);
+                connectionIcon.setImageResource(R.drawable.green);
+                inputTextView.append(System.getProperty("line.separator") + "Połącznie zostalo ustanowione!");
             } else {
                 connectionError = true;
-                socketButton.setText("CONN_ERROR!");
-                socketButton.setTextColor(Color.RED);
+                connectionIcon.setImageResource(R.drawable.red);
+                inputTextView.append(System.getProperty("line.separator") + "Błąd podczas próby połączenia!");
             }
         }
     }
@@ -629,8 +632,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
                 inputTextView.append(System.getProperty("line.separator") + "Zakończono wysyłanie w tle");
             }else {
                 inputTextView.append(System.getProperty("line.separator") + "Błąd podczas wysyłania wartości! Próbuję wznowić połączenie...");
-                socketButton.setText("CONN_ERROR");
-                socketButton.setTextColor(Color.RED);
+                connectionIcon.setImageResource(R.drawable.red);
                 new AsyncSocketConnect().execute();
             }
         }
