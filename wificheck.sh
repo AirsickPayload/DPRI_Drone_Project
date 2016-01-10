@@ -5,7 +5,6 @@ while true ; do
       sleep 1
    else
       echo "Network connection down! Attempting reconnection."
-      echo "0=0%" > /dev/servoblaster
       ifup --force wlan0
       sleep 5
    fi

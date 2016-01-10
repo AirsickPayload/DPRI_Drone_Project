@@ -39,10 +39,10 @@ def emergencyDownThrottling(placeholder1, placeholder2):
     throttleVal = int(float(throttleVal[0]))
     while throttleVal > throttleEmergencyMinVal:
         throttleVal -= 5
-        print throttleVal
         call('echo ' + str(throttlePin) + '=' + str(throttleVal) + '% > ' + '/dev/servoblaster', shell=True)
         call('echo ' + 'EMERGENCY: ' + str(throttleVal) + '%', shell=True)
         time.sleep(emergencyDownThrottleInterval)
+        print throttleVal
     emergency = False
 
 def lowVoltageGuardThread(placeholder1, placeholder2):
