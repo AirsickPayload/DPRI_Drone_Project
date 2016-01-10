@@ -65,7 +65,7 @@ def exeC(servoNumber, valueHolder):
         execString += "% "
     else:
         execString += "us "
-    execString += ">> /home/alan/servoblaster.txt" # > /dev/servoblaster
+    execString += "> /dev/servoblaster" # > /dev/servoblaster
     call(execString, shell=True)
 
 def valSet(servoNumber, wartosc):
