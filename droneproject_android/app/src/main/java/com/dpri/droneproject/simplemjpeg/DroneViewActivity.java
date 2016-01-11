@@ -91,8 +91,6 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
         // Usunięcie belki z informacją o nazwie aplikacji.
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
-        //this.setContentView(R.layout.drone_input_window);
-        // TODO: ZMIENIĆ PRZYPIĘCIE ELEMENTÓW UI NA NOWY LAYOUT!
         this.setContentView(R.layout.drone_main_window_v2);
         initializeUIelements();
 
@@ -394,8 +392,6 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
                 ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
-
-            // TODO: Dodać zdarzenia na klawiszach + poprawić mapowanie.
             inputTextView.append(System.getProperty("line.separator") + "KEYEVENT: ");
             switch (keyCode) {
                 case KeyEvent.KEYCODE_BUTTON_X:
@@ -657,7 +653,6 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
 
     public class DoRead extends AsyncTask<String, Void, MjpegInputStream> {
         protected MjpegInputStream doInBackground(String... url) {
-            //TODO: if camera has authentication deal with it and don't just not work
             HttpResponse res = null;
             DefaultHttpClient httpclient = new DefaultHttpClient();
             Log.d(TAG, "1. Sending http request");
