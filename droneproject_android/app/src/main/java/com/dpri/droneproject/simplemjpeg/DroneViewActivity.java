@@ -354,7 +354,7 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
 
         /*
             Jeżeli nie nastąpiło wciśnięcie któregoś z przycisków D-PADA - pobranie wartości z joysticków,
-            sprawdzenie czy na którymkolwiek z nich nastąpiła zmiana wartości >=1.
+            sprawdzenie czy na którymkolwiek z nich nastąpiła zmiana wartości >=2.
          */
         boolean significantChange = false;
         if (!czyDpad) {
@@ -486,6 +486,11 @@ public class DroneViewActivity extends Activity implements InputDeviceListener, 
             case "pin_roll":
                 droneValues.setRollPin(Integer.parseInt(sharedPref.getString("pin_roll", "6")));
                 break;
+            /*
+                Domyślne progi usuwania wartości z kolejki wysyłania to 1 / 5 / 10,
+                jednak nie należy ich traktować jako wartości zalecane!
+                Wartości należy dostosować przede wszystkim do jakości i stabilności połączenia Wi-Fi.
+             */
             case "queue_50":
                 queue50 = Integer.parseInt(sharedPref.getString("queue_50", "10"));
                 inputTextView.append(System.getProperty("line.separator") + "Kolejka >= 50 - usuwanie " + queue50 + " wartości");
