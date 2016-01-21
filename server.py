@@ -60,20 +60,17 @@ def pingThreadMethod(addr, ignored):
     try:
         pingsocket.bind(('', pingPort)) # zamiast socket.gethostname() mozna '', zeby byl osiagalny ze wszystkich interfejsow
     except socket.error as msg:
-        print 'PingSocket bind failed. Poprzedni wątek pingujący prawdopodobnie wciąż pracuje - OK' #+ str(msg[0]) + ' Message ' + msg[1]
+        print 'PingSocket bind failed. Poprzedni wątek pingujący prawdopodobnie wciąż pracuje!' #+ str(msg[0]) + ' Message ' + msg[1]
         sys.exit()
     # oczekiwanie na odp. ze strony klienta nie moze trwac wiecznie
     pingsocket.settimeout(2) # max 2s
     while 1:
-        # w przypadku poprawnego rozlaczenia odczekac 1.5sek przed ponowna proba polaczenia; w przeciwnym przypadku zostanie wyrzucony
-        # błąd bindowania socketu - patrz try--except metody pingThreadMethod -> jeżeli w ciągu 1.5s zostanie poprawnie nawiązane połączenie
-        # działający wątek nie będzie sprawiał problemów.
-        time.sleep(1.5)
-
-        # jeśli połączenie zostanie poprawnie zakończone w głównym wątku - wyłącz wątek pingujący
         if closed:
             pingsocket.close()
             break
+
+        time.sleep(1.5)
+
         try:
             if awaiting:
                 print 'PING?',
@@ -123,7 +120,7 @@ while 1:
     versionStringClient, addr = s.recvfrom(1024)
     print 'Connected with ' + addr[0] + ':' + str(addr[1])
     #compatibility string
-    versionStringServer = 'v28/10/2015'
+    versionStringServer = 'v21/01/2016'
     versionStringClient = versionStringClient.decode()
     if versionStringClient == versionStringServer:
         print "VERSION MATCH!"

@@ -2,10 +2,12 @@ package com.dpri.droneproject.simplemjpeg.socketPackage;
 
 import android.util.Log;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
 /**
@@ -15,7 +17,7 @@ public class DroneSocketClient {
     private static final String TAG = "DroneSocketClient";
     private static final boolean DEBUG = true;
 
-    private String versionSocketClient = "v28/10/2015";
+    private String versionSocketClient = "v21/01/2016";
     private String serverAddress;
     private int serverPort;
     private int pingPort;
@@ -67,6 +69,8 @@ public class DroneSocketClient {
         try {
             outData = valuesString.getBytes("UTF-8");
             outPacket = new DatagramPacket(outData, outData.length, srvAddr, serverPort);
+
+            if(DEBUG) Log.d("Czas_klient: ", Long.toString(System.currentTimeMillis()));
             clientSocket.send(outPacket);
 
             clientSocket.receive(inPacket);
@@ -143,11 +147,14 @@ public class DroneSocketClient {
                 if (DEBUG) Log.d(TAG, "UNKNOWN PING MESSAGE:" + response);
                 return false;
             }
-        } catch(Exception e){
-            if (DEBUG){
-                e.printStackTrace();
-                Log.d(TAG, "PING SOCKET ERROR / MAYBE IT'S ALREADY CLOSED?");
-            }
+        } catch(SocketTimeoutException e){
+            if (DEBUG) Log.d(TAG, "PING SOCKET TIMEOUT!");
+            return false;
+        } catch(SocketException e){
+            // Zamknięcie socketu podczas gdy pętla oczekuje na wiadomość PING - nieszkodzliwy wyjątek.
+            return true;
+        } catch(IOException e){
+            if (DEBUG) Log.d(TAG, "PING SOCKET IOEXCEPTION!");
             return false;
         }
     }
